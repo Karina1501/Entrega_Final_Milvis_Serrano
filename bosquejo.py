@@ -1,68 +1,76 @@
-import json
-productos = [] 
-
-try:
-    with open("datos.json","r") as archivo:
-        productos = json.load(archivo)
-
-except FileNotFoundError:
-    with open("datos.json","w") as archivo:
-        productos = []
-        
-        
-def sincronizar():
-    with open("datos.json","w") as archivo:
-        json.dump(productos,archivo)  
+import dataset
+miBase = dataset.connect("sqlite:///base.db")
+tabla = miBase["Productos"]
 
 while True:
-        print("\n======= Sistema de Administración de Productos =======\n")
-        print("1. Listar productos")
-        print("2. Agregar producto")
-        print("3. Eliminar producto")
-        print("4. Buscar producto")
-        print("5. Salir")
-        opcion = input("Elija una opción (1-5): ")
+    print("\n======= Sistema de Administración de Productos =======\n")
+    print("1. Listar productos")
+    print("2. Agregar producto")
+    print("3. Eliminar producto por Nombre")
+    print("4. Eliminar producto por ID")
+    print("5. Actualizar Nuevo producto")
+    print("6. Buscar Todos los producto")
+    print("7. Salir")
+    opcion = input("Elija una opción (1-7): ")
+    
+    match opcion:
 
-        if opcion == "1":
-            if not productos:
-                print(" El inventario está vacío.")
-            else:
-                print("\n==== LISTA DE PRODUCTOS ====\n")
-                for producto in productos:
-                    print(f"Producto: {producto[1]} | Precio: $ {producto[2]} | Categoria: {producto[0]} | Stock: {producto[3]}")
+        case "1":
+            print("\n==== LISTA DE PRODUCTOS ====\n")   
+            for items in tabla:
+                print(f'ID:{items["id"]} | Producto: {items["Nombre"]} | Precio: {items["Precio"]} | Categoria: {items["Categoria"]}')
+
+                
+        case "2":
+            print("\n==== AGREGAR PRODUCTO ====\n")
+            agregarProducto = input("\nIngrese Nombre del Producto: ").strip()
+            agregarPrecio = float(input("\nIngrese el Precio del Producto: ").strip())
+            agregarCategoria = input("\nIngrese la Categoria del Producto: ").strip()
+
+            agregar = {"Nombre":agregarProducto,"Precio":agregarPrecio,"Categoria":agregarCategoria}
+
+            tabla.insert(agregar)
+
+                                       
+        case "3":
+            print("\n==== ELIMINAR PRODUCTO ====\n")
+            removerNombre = input("\nIngrese el nombre del producto a eliminar: ").strip()
             
-        elif opcion == "2":
-            print("\n==== AGREGAR PRODUCTOS ====\n")
-            categoria = input("Ingrese la Categoria del producto: ").strip().lower()
-            nombre = input("Ingrese nombre del producto: ").strip().lower()
-            try:
-                precio = float(input("Ingrese precio del producto: "))
-                stock = int(input("Ingrese stock inicial: "))
-                agregar = (categoria, nombre, precio, stock)
-                productos.append(agregar)
-                sincronizar()
-            except ValueError:
-                print(" Entrada inválida. El precio y el stock deben ser números.")
+            tabla.delete(Nombre=removerNombre)
+            
+            print(f"\n{removerNombre} se ha eliminado exitosamente!\n")
+         
+        case "4":
+            print("\n==== ELIMINAR PRODUCTO POR ID ====\n")
+            borrarID = int(input("\nID de prod. a borrar: ").strip())
+            tabla.delete(id=borrarID)
+            
+            print(f"\nEl producto cuyo ID es {borrarID} fue quitado con exito!!!\n")
+               
+        case "5":
+            print("\n==== ACTUALIZAR PRODUCTO ====\n")
+            idBuscar = int(input("\nID a actualizar: "))
+            
+            nombreActualizar = input("\nIngrese Nombre Nuevo del Producto: ")
+            precioActualizar = float(input("\nIngrese Precio Nuevo del Producto: "))
+            catActualizar = input("\nIngrese Nueva Categoria del Producto: ")
+            
+            actualizar = {"id":idBuscar,"Nombre":nombreActualizar, "Precio":precioActualizar,"Categoria":catActualizar}
+            tabla.upsert(actualizar,["id"])
         
-        elif opcion == "3":
-             print("\n==== ELIMINAR PRODUCTOS ====\n")
-             eliminar = input("\nIngrese el nombre del producto a eliminar: \n").strip().lower()
-             if eliminar in productos:
-                productos.remove(eliminar)
-                print(f"\nSe ha eliminado {eliminar} exitosamente.\n")
-             else:
-                  print(f"\nNo se encontró {eliminar} en la lista de productos.\n") 
-        
-        elif opcion == "4":
-            print("\n==== BUSCAR PRODUCTOS ====\n")
-            buscar = input("\nIngrese el nombre del producto a buscar: \n").strip().lower()
-            if buscar in productos:
-                print(f"\nSe encontraron resultados de {buscar} con éxito.\n")
-            else:
-                print(f"\nNo se encontraron resultados de {buscar} en la búsqueda.\n")
-           
-        elif opcion == "5":
-            print("\n*** Gracias por usar el sistema de administración de productos. Hasta la próxima! ***\n")
-            break
-        else:
-            print("\n*** Opción inválida. Por favor, seleccione una opción válida del menú. ***\n")
+        case "6":
+            print("\n==== BUSCAR TODOS LOS PRODUCTOS ====\n")
+            buscarTodo = input("\nIngrese Producto a buscar: ")
+            
+            encontrados = tabla.find(Nombre=buscarTodo)
+            
+            for encontrado in encontrados:
+                print(f'{encontrado["Nombre"]} Se encontró en ID: {encontrado["id"]}')
+
+        case "7":
+             print("\n=== Gracias por usar el sistema de administración de productos. Hasta la próxima! ===\n")
+             break
+            
+            
+
+            
